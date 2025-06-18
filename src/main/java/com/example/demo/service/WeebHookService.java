@@ -1,6 +1,8 @@
 package com.example.demo.service;
 
 import com.example.demo.controller.RequestTransacao;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -10,8 +12,12 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.Map;
+
 @Service
 public class WeebHookService {
+
+    private static final Logger log = LoggerFactory.getLogger(WeebHookService.class);
 
     @Autowired
     RestTemplate restTemplateHook;
@@ -19,7 +25,8 @@ public class WeebHookService {
     @Value("${callback.url}")
     private String urlWebHookTest;
 
-    public void notify(RequestTransacao requestTransacao){
+    public void callBack(RequestTransacao requestTransacao){
+        log.info("Callback iniciado para a transacao id: {}", requestTransacao.id());
 
         final var request = new RequestWebHook();
 
@@ -29,7 +36,11 @@ public class WeebHookService {
         HttpEntity<RequestWebHook> httpEntity =
                 new HttpEntity<>(request.buildRequestWebHook(requestTransacao), headers);
 
-        restTemplateHook.exchange(urlWebHookTest, HttpMethod.POST, httpEntity, String.class);
+        log.info("Callback aplicado para url e id: {}", Map.of("url", requestTransacao.id(), "id", requestTransacao.id()));
+
+        final var response = restTemplateHook.exchange(urlWebHookTest, HttpMethod.POST, httpEntity, String.class);
+
+        log.info("Status code callback : {}", response.getStatusCode());
 
     }
 

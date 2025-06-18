@@ -23,7 +23,7 @@ public class WebHookController {
         log.info("Requisicao recebida para transacao ID: {}", requestTransacao.id());
         log.debug("Detalhes requisicao: {}", requestTransacao);
 
-        hookService.notify(requestTransacao);
+        hookService.callBack(requestTransacao);
         return ResponseEntity.ok().build();
 
     }
