@@ -1,6 +1,8 @@
 package com.example.demo.service;
 
 import com.example.demo.controller.RequestTransacao;
+import com.example.demo.domain.Origem;
+import com.example.demo.domain.OrigemFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,26 +24,36 @@ public class WeebHookService {
     @Autowired
     RestTemplate restTemplateHook;
 
-    @Value("${callback.url}")
-    private String urlWebHookTest;
+    @Autowired
+    private OrigemFactory origemFactory;
 
-    public void callBack(RequestTransacao requestTransacao){
+
+    public void callBack(final RequestTransacao requestTransacao){
         log.info("Callback iniciado para a transacao id: {}", requestTransacao.id());
 
         final var request = new RequestWebHook();
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
         HttpEntity<RequestWebHook> httpEntity =
-                new HttpEntity<>(request.buildRequestWebHook(requestTransacao), headers);
+                new HttpEntity<>(request.buildRequestWebHook(requestTransacao), headerDefaultFactory());
 
         log.info("Callback aplicado para url e id: {}", Map.of("url", requestTransacao.id(), "id", requestTransacao.id()));
 
-        final var response = restTemplateHook.exchange(urlWebHookTest, HttpMethod.POST, httpEntity, String.class);
+        final var response = restTemplateHook.exchange(urlFactory(requestTransacao), HttpMethod.POST, httpEntity, String.class);
 
         log.info("Status code callback : {}", response.getStatusCode());
 
+    }
+
+    private String urlFactory(RequestTransacao requestTransacao){
+        final var result = origemFactory.getStrategy(Origem.valueOf(requestTransacao.origem()));
+        return result.definirOrigem(Origem.valueOf(requestTransacao.origem()));
+    }
+
+    private HttpHeaders headerDefaultFactory(){
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        return headers;
     }
 
 }
